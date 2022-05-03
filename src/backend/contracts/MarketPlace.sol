@@ -17,6 +17,15 @@ contract Marketplace is ReentrancyGuard {
         address payable seller;
         bool sold;
     }
+
+    event Offered(
+        uint itemId,
+        address indexed nft,
+        uint tokenId,
+        uint price,
+        address indexed seller
+    );
+
     mapping(uint => Item) public items;
 
     constructor(uint _feePercent) {
@@ -24,9 +33,25 @@ contract Marketplace is ReentrancyGuard {
         feePercent = _feePercent;
     }
 
-    function makeItem(
+    function createItem(
         IERC721 _nft,
         uint _tokenId,
         uint _price
-    ) external nonReentrant {}
+    ) external nonReentrant {
+        require(_price > 0, "Price must be set above 0");
+        // 计数器添加
+        itemCount++;
+        _nft.transferFrom(msg.sender, address(this), _tokenId);
+        // 添加新增item到mapping中
+        items[itemCount] = Item(
+            itemCount,
+            _nft,
+            _tokenId,
+            _price,
+            payable(msg.sender),
+            false
+        );
+
+        emit Offered(itemCount, address(_nft), _tokenId, _price, msg.sender);
+    }
 }
